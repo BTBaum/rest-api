@@ -38,17 +38,42 @@ var apiRouter = express.Router();
 // Middleware to use for all requests
 apiRouter.use(function(req, res, next) {
   console.log('Somebody just came to our app!');
-
   // this is where users will be authenticated
   next();
 });
 
-
 // test route to make sure everything is working
 // accessed at GET http://localhost:8080/api
 apiRouter.get('/', function(req, res) {
-  res.json({message: 'Welcome to the API!!!'})
+  res.json({message: 'horray! welcome to our api!!!'})
 });
+
+// api/users
+apiRouter.route('/users')
+  // create a user (accessed at localhost:8080/api/users)
+  .post(function(req, res) {
+    // create a new instance of the User model
+    var user = new User();
+    // set the users info (comes from the request)
+    user.name = req.body.name;
+    user.username = req.body.username;
+    user.password = req.body.password;
+
+    // save the user and check for errors
+    user.save(function(err) {
+      if (err) {
+        if (err.code === 11000) {
+          return res.json({ sucess: false, messaage: 'A user with that username already exists.'});
+        } else {
+          return res.send(err);
+        }
+      }
+      res.json({ message: 'User created!' });
+    });
+
+  });
+
+
 
 // PUBLIC ROUTES ===============================================================
 // route for home page
