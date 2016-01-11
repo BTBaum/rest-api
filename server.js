@@ -1,5 +1,6 @@
 // BASE SETUP
 // Calling Packages
+var User = require('./modules/user');
 var express = require('express'); // call express
 var app = express(); // define our app using express
 var bodyParser = require('body-parser'); // get body-parser
@@ -25,6 +26,15 @@ app.use(function(req, res, next) {
 
 // Log all requests to the console
 app.use(morgan('dev'));
+
+// Middleware to use for all requests
+apiRouter.use(function(req, res, next) {
+  // do logging
+  console.log('Somebody just came to our app!');
+
+  // this is where users will be authenticated
+  next();
+})
 
 // Routes for API
 // route for home page
