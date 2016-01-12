@@ -48,7 +48,7 @@ apiRouter.get('/', function(req, res) {
   res.json({message: 'horray! welcome to our api!!!'})
 });
 
-// api/users
+// Users Route
 apiRouter.route('/users')
   // create a user (accessed at localhost:8080/api/users)
   .post(function(req, res) {
@@ -70,9 +70,62 @@ apiRouter.route('/users')
       }
       res.json({ message: 'User created!' });
     });
+  })
 
+  // Get all of the users (accessed at GET localhost:8080/api/users)
+  .get(function(req, res) {
+    User.find(function(err, users) {
+      if (err) res.send(err);
+
+      // return the users
+      res.json(users);
+    });
   });
 
+apiRouter.route('/users/:user_id')
+  // get specific user based on user id
+  // (accessed at GET http://localhost:8080/api/users/:user_id)
+  .get(function(req, res) {
+    User.findById(req.params.user_id, function(err, user) {
+      if (err) res.send(err);
+
+      //return specific user with corresponding id
+      res.json(user);
+    });
+  })
+
+  // update the user with this id
+  .put(function(req, res) {
+    // use the user model to fiond the user we want to update
+    User.findById(req.params.user_id, function(err, user) {
+      if (err) res.send(err);
+
+      // update the user info only if it is new info
+      if (req.body.name) user.name = req.body.name;
+      if (req.body.username) user.username = req.body.username;
+      if (req.body.password) user.password = req.body.password;
+
+      // save the user
+      user.save(function(err) {
+        if (err) res.send(err);
+
+        // retrun message
+        res.json({ message: 'User updated!' });
+      });
+    });
+  })
+
+  // delete the user with specific id
+  .delete(function(req, res) {
+    User.remove({
+      _id: req.params.user_id
+    }, function(err, user) {
+      if (err) return res.send(err);
+
+      //retrun mseeage
+      res.json({ message: 'Sucessfully deleted'});
+    });
+  });
 
 
 // PUBLIC ROUTES ===============================================================
