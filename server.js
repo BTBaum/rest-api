@@ -5,7 +5,8 @@ var bodyParser = require('body-parser'); // get body-parser
 var morgan = require('morgan'); // used to see requests
 var mongoose = require('mongoose'); // for working w/ our database
 var port = process.env.PORT || 8080; // set the port for our app
-
+var jwt = require('jsonwebtoken');
+var superSecret = 'ilovescotchscotchyscotchscotch';
 // BASE SETUP ==================================================================
 var User = require('./modules/user');
 
@@ -29,12 +30,64 @@ app.use(morgan('dev'));
 // Connecting to our database (locally)
 mongoose.connect('mongodb://localhost:27017/myDatabase');
 
+// PUBLIC ROUTES ===============================================================
+// route for home page
+app.get('/', function(req, res) {
+  res.send('Welcome to the home page!')
+});
+
 // ROUTERS =====================================================================
+// instance of express router
 var apiRouter = express.Router();
 
 // API ROUTES ==================================================================
-// accessed at GET http://localhost:8080/api
 
+// AUTHENTICATING USERS ========================================================
+// route to authenticate a user
+// accessed at GET http://localhost:8080/api/authenticate
+apiRouter.post('/authenticate', function(req, res) {
+  // find user
+  // select the name username and password explicitly
+  User.findOne({
+    username: req.body.username
+  }).select('name username password').exec(function(err, user) {
+    if (err) throw err;
+
+    // no user with that username was found
+    if (!user) {
+      res.json({
+        success: false,
+        message: 'Authentication failed. User not found.'
+      });
+    } else if (user) {
+      // check if password matches
+      var validPassword = user.comparePassword(req.body.password);
+      if (!validPassword) {
+        res.json({
+          success: false,
+          message: 'Authentication failed. Wrong password.'
+        });
+      } else {
+        // if user is found and password is correct
+        // create a token
+        var token = jwt.sign({
+          name: user.name,
+          username: user.username
+        }, superSecret, {
+          expiresInMinutes: 1440 // expires in 24 hours
+        });
+
+        res.json({
+          sucess: true,
+          message: 'Enjoy your token!',
+          token: token
+        });
+      }
+    }
+  });
+});
+
+// accessed at GET http://localhost:8080/api
 // Middleware to use for all requests
 apiRouter.use(function(req, res, next) {
   console.log('Somebody just came to our app!');
@@ -128,11 +181,7 @@ apiRouter.route('/users/:user_id')
   });
 
 
-// PUBLIC ROUTES ===============================================================
-// route for home page
-app.get('/', function(req, res) {
-  res.send('Welcome to the home page!')
-});
+
 
 // REGISTER OUR ROUTES =========================================================
 // More routes for our API will happen here
